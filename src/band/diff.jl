@@ -1,5 +1,5 @@
 # Must prepend a dot due to Requires.jl
-using .PlotlyJS
+using PlotlyJS
 
 export plot_band_diff
 

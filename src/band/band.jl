@@ -1,5 +1,6 @@
 # Must prepend a dot due to Requires.jl
-using .PlotlyJS
+using PlotlyJS
+using Brillouin
 
 export plot_band
 
