@@ -97,10 +97,10 @@ function _get_band_plot(
     if ndims(E) == 2
         traces = PlotlyJS.AbstractTrace[]
         for e in eachrow(E_plot)
-            push!(traces, scatter(; x=x, y=e, line=attr(; color=color, kwargs...)))
+            push!(traces, PlotlyJS.scatter(; x=x, y=e, line=attr(; color=color, kwargs...)))
         end
     else
-        traces = scatter(; x=x, y=E_plot, line=attr(; color=color, kwargs...))
+        traces = PlotlyJS.scatter(; x=x, y=E_plot, line=attr(; color=color, kwargs...))
     end
 
     layout = Layout(;
@@ -182,7 +182,7 @@ See also the keyword arguments of [`_get_band_plot`](@ref).
 """
 function plot_band(x::AbstractVector, E::AbstractArray; kwargs...)
     P = _get_band_plot(x, E; kwargs...)
-    return plot(P)
+    return PlotlyJS.plot(P)
 end
 
 """

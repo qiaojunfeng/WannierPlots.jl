@@ -1,14 +1,10 @@
 using LinearAlgebra
 using PeriodicTable: elements
 # prepend . due to Requires.jl
-using .GeometryBasics: Point, TriangleFace
-using .Meshing
-using .StatsBase
-using .PlotlyJS
-
-# I haven't include this file into the package, because this introduce lots of dependencies.
-# TODO Once I sorted out how to incoporate plotting functions into the package without significantly
-# slowing down the precompilation, I will include this file into the package.
+using GeometryBasics: Point, TriangleFace
+using Meshing: MarchingCubes, MarchingTetrahedra, isosurface
+using StatsBase: fit, Histogram
+using PlotlyJS
 
 # unfortunately, the PeriodicTable.jl does not provide atomic radius info,
 # we can use this json from this repo
@@ -17,59 +13,6 @@ using .PlotlyJS
 # You need to first run
 #   wget https://raw.githubusercontent.com/AlexGustafsson/molecular-data/master/json/elements.json
 # elements = JSON.parsefile(joinpath(@__DIR__, "elements.json"))
-
-"""
-Generate a mesh3d for plotlyjs.
-"""
-function _plotly_mesh3d(
-    origin::AbstractVector{T},
-    lattice::AbstractMatrix{T},
-    W::AbstractArray{T,3},
-    iso::T,
-    color,
-) where {T<:Real}
-    algo = MarchingCubes(; iso=iso, insidepositive=true)
-    # use marching tetrahedra with iso at 100
-    # algo = MarchingTetrahedra(iso=100, insidepositive=true)
-    # use Naive Surface Nets with iso at 100
-    # algo = NaiveSurfaceNets(iso=100, insidepositive=true)
-
-    # generate the mesh using marching cubes
-    # mc = Mesh(cube.W, algo)
-    # save the file as a PLY file (change extension to save as STL, OBJ, OFF)
-    # save("mc.ply", mc)
-
-    # call isosurface to get a vector of points and vector of faces indexing to the points
-    widths = Point{3,Float64}([norm(lattice[:, i]) for i in 1:3])
-    # println(origin, widths)
-    vertices, faces = Meshing.isosurface(
-        W, algo, Point{3,Float32}, TriangleFace{Int}; origin=origin, widths=widths
-    )
-
-    n_vert = length(vertices)
-    xyz = zeros(Float64, 3, n_vert)
-
-    for i in 1:n_vert
-        xyz[:, i] = vertices[i]
-    end
-
-    n_face = length(faces)
-    ijk = zeros(Int, 3, n_face)
-    for i in 1:n_face
-        # plotly starts from 0
-        ijk[:, i] = faces[i] .- 1
-    end
-
-    x = xyz[1, :]
-    y = xyz[2, :]
-    z = xyz[3, :]
-    i = ijk[1, :]
-    j = ijk[2, :]
-    k = ijk[3, :]
-
-    t = PlotlyJS.mesh3d(; x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=0.6)
-    return t
-end
 
 """
 A plotly sphere.
@@ -85,20 +28,7 @@ function _sphere(r₀, r; kwargs...)
     return PlotlyJS.surface(; x=x, y=y, z=z, kwargs...)
 end
 
-"""
-Plotly lattice and atoms
-
-lattice: each column is a lattice vector
-atom_positions: each column is an atomic position, in fractional coordinates
-atom_numbers: atomic number of each atom
-origin: the overall shift of the structure, in cartesian
-"""
-function _plotly_structure(
-    lattice::AbstractMatrix,
-    atom_positions::AbstractMatrix,
-    atom_numbers::AbstractVector;
-    origin::AbstractVector=[0, 0, 0],
-)
+function _lattice(lattice::AbstractMatrix)
     # trace to loop through all the lattice parallelepipede
     xyz =
         [
@@ -119,7 +49,53 @@ function _plotly_structure(
             0 1 1
             0 0 1
         ]'
-    xyz = lattice * xyz
+    return lattice * xyz
+end
+
+function _atoms(
+    lattice::AbstractMatrix, atom_positions::AbstractMatrix, atom_numbers::AbstractVector
+)
+    xyz = []
+    radius = []
+    color = []
+    label = []
+    for i in axes(atom_positions, 2)
+        # TODO these are from json file
+        # ele = elements[atom_numbers[i]]
+        # s = ele["symbol"]
+        # c = ele["cpkHexColor"]
+        # r = ele["radius"] / elements[1]["radius"] / 10  # normalized by Hydrogen radius
+        # these from PeriodicTable
+        ele = elements[atom_numbers[i]]
+        s = ele.symbol
+        push!(label, s)
+        c = ele.cpk_hex
+        push!(color, c)
+        # https://github.com/JuliaPhysics/PeriodicTable.jl/issues/34
+        r = 0.5  # currently no radius in PeriodicTable
+        push!(radius, r)
+        pos = lattice * atom_positions[:, i]
+        push!(xyz, pos)
+    end
+    return xyz, radius, color, label
+end
+
+"""
+Plotly lattice and atoms
+
+lattice: each column is a lattice vector
+atom_positions: each column is an atomic position, in fractional coordinates
+atom_numbers: atomic number of each atom
+origin: the overall shift of the structure, in cartesian
+"""
+function _plotly_structure(
+    lattice::AbstractMatrix,
+    atom_positions::AbstractMatrix,
+    atom_numbers::AbstractVector;
+    origin::AbstractVector=[0, 0, 0],
+)
+    # lattice
+    xyz = _lattice(lattice)
     x = xyz[1, :] .+ origin[1]
     y = xyz[2, :] .+ origin[2]
     z = xyz[3, :] .+ origin[3]
@@ -166,20 +142,13 @@ function _plotly_structure(
     # )
     # atoms = scatter3d(d)
     atoms = []
-    for i in axes(atom_positions, 2)
-        # TODO these are from json file
-        # ele = elements[atom_numbers[i]]
-        # s = ele["symbol"]
-        # c = ele["cpkHexColor"]
-        # r = ele["radius"] / elements[1]["radius"] / 10  # normalized by Hydrogen radius
-        # these from PeriodicTable
-        ele = elements[atom_numbers[i]]
-        s = ele.symbol
-        c = ele.cpk_hex
-        # https://github.com/JuliaPhysics/PeriodicTable.jl/issues/34
-        r = 1  # currently no radius in PeriodicTable
+    xyz, radius, color, label = _atoms(lattice, atom_positions, atom_numbers)
+    for i in axes(xyz, 1)
+        s = label[i]
+        c = color[i]
+        r = radius[i]
         colorscale = [[0, c], [1, c]]
-        pos = lattice * atom_positions[:, i]
+        pos = xyz[i]
         sph = _sphere(pos, r; colorscale=colorscale, text=s, showscale=false)
         push!(atoms, sph)
     end
@@ -199,14 +168,80 @@ function _guess_isolevel(data)
 end
 
 """
+Generate a mesh3d.
+"""
+function _mesh3d(
+    origin::AbstractVector{T}, lattice::AbstractMatrix{T}, W::AbstractArray{T,3}, iso::T
+) where {T<:Real}
+    # algo = MarchingCubes(; iso=iso, insidepositive=iso>=0)
+    # use marching tetrahedra with iso at 100
+    algo = MarchingTetrahedra(; iso=iso, insidepositive=iso >= 0)
+    # use Naive Surface Nets with iso at 100
+    # algo = NaiveSurfaceNets(iso=100, insidepositive=iso>=0)
+
+    # generate the mesh using marching cubes
+    # mc = Mesh(cube.W, algo)
+    # save the file as a PLY file (change extension to save as STL, OBJ, OFF)
+    # save("mc.ply", mc)
+
+    # call isosurface to get a vector of points and vector of faces indexing to the points
+    widths = [1.0, 1.0, 1.0]
+    O = [0.0, 0.0, 0.0]
+    vertices, faces = isosurface(W, algo; origin=O, widths=widths)
+
+    n_vert = length(vertices)
+    xyz = zeros(Float64, 3, n_vert)
+
+    for i in 1:n_vert
+        xyz[:, i] = origin + lattice * vertices[i]
+    end
+
+    n_face = length(faces)
+    ijk = zeros(Int, 3, n_face)
+    for i in 1:n_face
+        ijk[:, i] = faces[i]
+    end
+
+    x = xyz[1, :]
+    y = xyz[2, :]
+    z = xyz[3, :]
+    i = ijk[1, :]
+    j = ijk[2, :]
+    k = ijk[3, :]
+
+    return (; x, y, z, i, j, k)
+end
+
+"""
+Generate a mesh3d for plotlyjs.
+"""
+function _plotly_mesh3d(
+    origin::AbstractVector{T},
+    lattice::AbstractMatrix{T},
+    W::AbstractArray{T,3},
+    iso::T,
+    color,
+) where {T<:Real}
+    x, y, z, i, j, k = _mesh3d(origin, lattice, W, iso)
+    # plotly starts from 0
+    for a in axes(i, 1)
+        i[a] -= 1
+        j[a] -= 1
+        k[a] -= 1
+    end
+    t = PlotlyJS.mesh3d(; x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=0.6)
+    return t
+end
+
+"""
 Plot volumetric data with Plotly.
 
 E.g., realspace WFs.
 
 data: volumetric data in 3D
 """
-function plot_wf(
-    rgrid::RGrid,
+function plot_wf_plotly(
+    rgrid::Wannier.RGrid,
     W::AbstractArray{T,3},
     lattice::AbstractMatrix{T},
     atom_positions::AbstractMatrix{T},
@@ -219,8 +254,8 @@ function plot_wf(
         iso = _guess_isolevel(W)
     end
 
-    O = origin(rgrid)
-    spanvec = span_vectors(rgrid)
+    O = Wannier.origin(rgrid)
+    spanvec = Wannier.span_vectors(rgrid)
     a, b = minimum(W), maximum(W)
     if iso >= a
         s1 = _plotly_mesh3d(O, spanvec, W, iso, "#C3423F")
@@ -229,9 +264,25 @@ function plot_wf(
         s2 = _plotly_mesh3d(O, spanvec, W, -iso, "#5BC0EB")
     end
 
-    return PlotlyJS.plot([structure..., s1, s2])
+    traces = [structure..., s1, s2]
+
+    # TODO Whatever I tried, plotlyjs refuses to set equal aspect ratio for the 3 axes :-(
+    # layout = Layout(;
+    #     # scene = attr(;
+    #     #     aspectmode = "cube",
+    #     # #     aspectratio = attr(; x=1, y=1, z=1),
+    #     # ),
+    #     # yaxis=attr(;
+    #     #     scaleanchor = "x",
+    #     #     scaleratio = 1,
+    #     # ),
+    #     # zaxis=attr(;
+    #     #     scaleanchor = "x",
+    #     #     scaleratio = 1,
+    #     # ),
+    # )
+    return Plot(traces)#, layout)
 end
 
-# TODO seems not working for non-orthogonal cell?
 # x = read_xsf("si2_00001.xsf");
-# Wannier.plot_wf(x.rgrid, x.W, x.primvec, inv(x.primvec) * x.atom_positions, Wannier.get_atom_number(x.atoms))
+# WannierPlots.plot_wf_plotly(x.rgrid, x.W, x.primvec, inv(x.primvec) * x.atom_positions, parse.(Int, x.atoms))
