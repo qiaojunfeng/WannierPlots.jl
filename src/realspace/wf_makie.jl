@@ -1,6 +1,6 @@
 using LinearAlgebra
 using GeometryBasics
-using Makie
+import Makie as MK
 # if you need a standalone window, call `using GLMakie` before `using WannierPlots`,
 # if you need a browser tab, call `using WGLMakie` before `using WannierPlots`.
 
@@ -52,21 +52,21 @@ function plot_wf(
     # lattice
     xyz = _lattice(lattice)
     # lines!(scene, xyz[1, :], xyz[2, :], xyz[3, :])
-    lines(xyz[1, :], xyz[2, :], xyz[3, :])
+    MK.lines(xyz[1, :], xyz[2, :], xyz[3, :])
 
-    fig = Makie.current_figure()
+    fig = MK.current_figure()
     # scene = fig.scene
     # println(scene)
-    cam3d_cad!(fig.scene; kwargs...)
+    MK.cam3d_cad!(fig.scene; kwargs...)
 
     # lattice vectors
     # https://github.com/JuliaPlots/Makie.jl/issues/1206
     head_len = 0.4
-    ps = [Point3f(0, 0, 0) for i in 1:3]
-    ns = [Point3f(a * (norm(a) - head_len) / norm(a)) for a in eachcol(lattice)]
+    ps = [MK.Point3f(0, 0, 0) for i in 1:3]
+    ns = [MK.Point3f(a * (norm(a) - head_len) / norm(a)) for a in eachcol(lattice)]
     color = [:red, :green, :blue]
     # arrows!(scene,
-    arrows!(
+    MK.arrows!(
         ps,
         ns;
         fxaa=true, # turn on anti-aliasing
@@ -83,7 +83,7 @@ function plot_wf(
     ys = [a[2] for a in xyz]
     zs = [a[3] for a in xyz]
     # meshscatter!(scene, xs, ys, zs, markersize = radius, color = color)
-    meshscatter!(xs, ys, zs; markersize=radius, color=color)
+    MK.meshscatter!(xs, ys, zs; markersize=radius, color=color)
 
     if isnothing(iso)
         iso = _guess_isolevel(W)
@@ -110,14 +110,14 @@ function plot_wf(
         vertices = hcat(x, y, z)
         faces = hcat(i, j, k)
         # Makie.mesh!(scene, vertices, faces; color="#FE4A49", kwargs...)
-        Makie.mesh!(vertices, faces; color="#FE4A49", kwargs...)
+        MK.mesh!(vertices, faces; color="#FE4A49", kwargs...)
     end
     if iso <= b
         x, y, z, i, j, k = _mesh3d(O, V, W, -iso)
         vertices = hcat(x, y, z)
         faces = hcat(i, j, k)
         # Makie.mesh!(scene, vertices, faces; color="#1BE7FF", kwargs...)
-        Makie.mesh!(vertices, faces; color="#1BE7FF", kwargs...)
+        MK.mesh!(vertices, faces; color="#1BE7FF", kwargs...)
     end
 
     # return scene

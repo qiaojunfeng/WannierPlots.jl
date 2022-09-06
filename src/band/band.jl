@@ -1,6 +1,6 @@
 # Must prepend a dot due to Requires.jl
 using PlotlyJS
-using Brillouin
+using Brillouin: KPathInterpolant
 using Wannier
 
 export plot_band
