@@ -199,6 +199,6 @@ See also the keyword arguments of [`_get_band_plot`](@ref).
 """
 function plot_band(kpi::KPathInterpolant, E::AbstractArray; kwargs...)
     x = Wannier.get_x(kpi)
-    symm_idx, symm_label = Wannier._get_symm_idx_label(kpi)
+    symm_idx, symm_label = Wannier.get_symm_idx_label(kpi)
     return plot_band(x, E; symm_idx=symm_idx, symm_label=symm_label, kwargs...)
 end
