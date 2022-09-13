@@ -1,6 +1,6 @@
 # WannierPlots.jl
 
-A plotting extension for [`Wannier90.jl`](https://wannierjl.org).
+A plotting extension for [`Wannier.jl`](https://wannierjl.org).
 
 ## Features
 
