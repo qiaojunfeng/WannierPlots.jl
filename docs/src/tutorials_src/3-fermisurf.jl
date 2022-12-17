@@ -22,11 +22,11 @@ using Wannier
 using WannierPlots
 
 # Path of current tutorial
-CUR_DIR = "3-fermisurf"
+CUR_DIR = "8-fermi_surface"
 
 bxsf = Wannier.read_bxsf("$CUR_DIR/cu.bxsf")
 
-fig = WannierPlots.plot_fermisurf_plotly(bxsf.rgrid, bxsf.fermi_energy, bxsf.E; kpath=kpath)
+fig = WannierPlots.plot_fermisurf_plotly(bxsf.rgrid, bxsf.fermi_energy, bxsf.E)
 fig.layout.width = 1000
 fig.layout.height = 1000
 fig.layout.autosize = false

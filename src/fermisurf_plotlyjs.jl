@@ -38,7 +38,7 @@ function plot_fermisurf_plotly(
         # move into the BZ, since the input bxsf is computed on a mesh defined by
         # three reciprocal lattice.
         x, y, z, i, j, k = _translate_fbz(basis, x, y, z, i, j, k)
-        surf = _plotly_mesh3d(x, y, z, i, j, k, "#C3423F")
+        surf = _plotly_mesh3d(x, y, z, i, j, k, "")#"#C3423F")
         push!(traces, surf)
     end
 

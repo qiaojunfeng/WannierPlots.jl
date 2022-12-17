@@ -173,11 +173,11 @@ Generate a mesh3d.
 function _mesh3d(
     origin::AbstractVector{T}, lattice::AbstractMatrix{T}, W::AbstractArray{T,3}, iso::T
 ) where {T<:Real}
-    # algo = MarchingCubes(; iso=iso, insidepositive=iso>=0)
-    # use marching tetrahedra with iso at 100
-    algo = MarchingTetrahedra(; iso=iso, insidepositive=iso >= 0)
-    # use Naive Surface Nets with iso at 100
-    # algo = NaiveSurfaceNets(iso=100, insidepositive=iso>=0)
+    algo = MarchingCubes(; iso=iso, insidepositive=iso >= 0)
+    # use marching tetrahedra with iso
+    # algo = MarchingTetrahedra(; iso=iso, insidepositive=iso >= 0)
+    # use Naive Surface Nets with iso
+    # algo = NaiveSurfaceNets(; iso=iso, insidepositive=iso>=0)
 
     # generate the mesh using marching cubes
     # mc = Mesh(cube.W, algo)
@@ -234,6 +234,7 @@ function _plotly_mesh3d(
     j::AbstractVector{Int},
     k::AbstractVector{Int},
     color,
+    opacity=1.0,
 ) where {T<:Real}
     # plotly starts from 0
     for a in axes(i, 1)
@@ -241,7 +242,18 @@ function _plotly_mesh3d(
         j[a] -= 1
         k[a] -= 1
     end
-    t = PlotlyJS.mesh3d(; x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=0.6)
+    t = PlotlyJS.mesh3d(;
+        x=x,
+        y=y,
+        z=z,
+        i=i,
+        j=j,
+        k=k,
+        color=color,
+        opacity=opacity,
+        lighting=attr(; ambient=0.3, diffuse=0.8, specular=0.8, roughness=0.2),
+        lightposition=attr(; x=10, y=10, z=10),
+    )
     return t
 end
 
