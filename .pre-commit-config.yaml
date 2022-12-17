@@ -44,4 +44,5 @@ repos:
       exclude: >-
         (?x)^(
             deps/statements.jl
+            tutorials/
         )$
