@@ -223,6 +223,18 @@ function _plotly_mesh3d(
     color,
 ) where {T<:Real}
     x, y, z, i, j, k = _mesh3d(origin, lattice, W, iso)
+    return _plotly_mesh3d(x, y, z, i, j, k, color)
+end
+
+function _plotly_mesh3d(
+    x::AbstractVector{T},
+    y::AbstractVector{T},
+    z::AbstractVector{T},
+    i::AbstractVector{Int},
+    j::AbstractVector{Int},
+    k::AbstractVector{Int},
+    color,
+) where {T<:Real}
     # plotly starts from 0
     for a in axes(i, 1)
         i[a] -= 1
