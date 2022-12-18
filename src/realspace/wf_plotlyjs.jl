@@ -81,19 +81,12 @@ function _atoms(
 end
 
 """
-Plotly lattice and atoms
+Plotly lattice
 
 lattice: each column is a lattice vector
-atom_positions: each column is an atomic position, in fractional coordinates
-atom_numbers: atomic number of each atom
 origin: the overall shift of the structure, in cartesian
 """
-function _plotly_structure(
-    lattice::AbstractMatrix,
-    atom_positions::AbstractMatrix,
-    atom_numbers::AbstractVector;
-    origin::AbstractVector=[0, 0, 0],
-)
+function _plotly_lattice(lattice::AbstractMatrix, origin::AbstractVector=[0, 0, 0])
     # lattice
     xyz = _lattice(lattice)
     x = xyz[1, :] .+ origin[1]
@@ -126,6 +119,25 @@ function _plotly_structure(
     )
     axs = PlotlyJS.cone(arrow)
 
+    return [lat, axs]
+end
+
+"""
+Plotly lattice and atoms
+
+lattice: each column is a lattice vector
+atom_positions: each column is an atomic position, in fractional coordinates
+atom_numbers: atomic number of each atom
+origin: the overall shift of the structure, in cartesian
+"""
+function _plotly_structure(
+    lattice::AbstractMatrix,
+    atom_positions::AbstractMatrix,
+    atom_numbers::AbstractVector;
+    origin::AbstractVector=[0, 0, 0],
+)
+    traces = _plotly_lattice(lattice, origin)
+
     # atoms
     # d = Dict(
     #     "mode" => "markers",
@@ -153,7 +165,9 @@ function _plotly_structure(
         push!(atoms, sph)
     end
 
-    return [lat, axs, atoms...]
+    append!(traces, atoms)
+
+    return traces
 end
 
 """

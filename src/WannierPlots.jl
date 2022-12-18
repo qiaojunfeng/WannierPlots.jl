@@ -12,4 +12,6 @@ include("realspace/wf_makie.jl")
 
 include("fermisurf_plotlyjs.jl")
 
+include("bvectors.jl")
+
 end

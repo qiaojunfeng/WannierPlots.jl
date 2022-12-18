@@ -3,6 +3,42 @@ using LinearAlgebra: inv
 using PlotlyJS
 using Brillouin: wignerseitz, KPath, reduce_to_wignerseitz
 
+const TRANSPARENT_LAYOUT = Layout(;
+    showlegend=false,
+    scene=attr(;
+        xaxis=attr(;
+            tickvals=[],
+            zeroline=false,
+            showgrid=false,
+            showbackground=false,
+            title=attr(; text=""),
+        ),
+        yaxis=attr(;
+            tickvals=[],
+            zeroline=false,
+            showgrid=false,
+            showbackground=false,
+            title=attr(; text=""),
+        ),
+        zaxis=attr(;
+            tickvals=[],
+            zeroline=false,
+            showgrid=false,
+            showbackground=false,
+            title=attr(; text=""),
+        ),
+        aspectmode="data",
+        camera=attr(; up=attr(; x=0, z=1, y=0), center=attr(; x=0, y=0, z=0)),
+        dragmode="turntable",
+    ),
+    margin=attr(; l=0, r=0, b=0, t=0),
+    autosize=false,
+    #width=200, height=200,
+    # transparent
+    plot_bgcolor="rgba(255, 255, 255, 1)",
+    paper_bgcolor="rgba(255, 255, 255, 1)",
+)
+
 """
 Plot Fermi surface with Plotly.
 """
@@ -42,42 +78,7 @@ function plot_fermisurf_plotly(
         push!(traces, surf)
     end
 
-    layout = Layout(;
-        showlegend=false,
-        scene=attr(;
-            xaxis=attr(;
-                tickvals=[],
-                zeroline=false,
-                showgrid=false,
-                showbackground=false,
-                title=attr(; text=""),
-            ),
-            yaxis=attr(;
-                tickvals=[],
-                zeroline=false,
-                showgrid=false,
-                showbackground=false,
-                title=attr(; text=""),
-            ),
-            zaxis=attr(;
-                tickvals=[],
-                zeroline=false,
-                showgrid=false,
-                showbackground=false,
-                title=attr(; text=""),
-            ),
-            aspectmode="data",
-            camera=attr(; up=attr(; x=0, z=1, y=0), center=attr(; x=0, y=0, z=0)),
-            dragmode="turntable",
-        ),
-        margin=attr(; l=0, r=0, b=0, t=0),
-        autosize=false,
-        #width=200, height=200,
-        # transparent
-        plot_bgcolor="rgba(255, 255, 255, 1)",
-        paper_bgcolor="rgba(255, 255, 255, 1)",
-    )
-    return Plot(traces, layout)
+    return Plot(traces, TRANSPARENT_LAYOUT)
 end
 
 """
