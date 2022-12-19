@@ -15,10 +15,13 @@ The b-vectors from the same shell have the same color.
 - `bvectors`: the BVectors
 - `n_k`: the number of repeated kpoints in each direction
 """
-function plot(bvectors::BVectors; n_k::Int=1)
+function PlotlyJS.plot(bvectors::BVectors; n_k::Int=1)
     traces = _plotly_lattice(bvectors.recip_lattice)
 
-    supercell, _ = make_supercell(bvectors.kpoints, n_k)
+    # This generates too much points, hard to see
+    # supercell, _ = make_supercell(bvectors.kpoints, n_k)
+    # I just translate by half of the reciprocal lattice
+    supercell = bvectors.kpoints .- 0.5  # in fractional coordinates
     supercell_cart = bvectors.recip_lattice * supercell
 
     d = Dict(
@@ -39,8 +42,8 @@ function plot(bvectors::BVectors; n_k::Int=1)
         vecs = bvectors.bvectors[:, mask]  # this is in Cartesian
         radius = 1e-2 * abs(bvectors.weights[ib])
         # I will just use a color from periodic table, this is simple and won't repeat
-        # Hydrogen is pure white, skip it
-        c = elements[ib + 1].cpk_hex
+        # Hydrogen is pure white, and the next color is also too light, skip them
+        c = elements[ib + 2].cpk_hex
         colorscale = [[0, c], [1, c]]
 
         for (i, v) in enumerate(eachcol(vecs))
