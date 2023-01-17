@@ -32,7 +32,7 @@ const TRANSPARENT_LAYOUT = Layout(;
         dragmode="turntable",
     ),
     margin=attr(; l=0, r=0, b=0, t=0),
-    autosize=false,
+    autosize=true, #false,
     #width=200, height=200,
     # transparent
     plot_bgcolor="rgba(255, 255, 255, 1)",
@@ -54,10 +54,11 @@ function plot_fermisurf_plotly(
     bz = wignerseitz([v for v in eachcol(recip_lattice)])
 
     if kpath === nothing
-        traces = plot(bz).plot.data
+        traces = PlotlyJS.plot(bz).plot.data
     else
-        isapprox(bz.basis, kpath.basis) || error("kpath has a different reciprocal lattice")
-        traces = plot(bz, kpath).plot.data
+        # some times there are only 7 digits in bxsf, so we use a loose tolerance
+        isapprox(bz.basis, kpath.basis; atol=1e-5) || error("kpath has a different reciprocal lattice")
+        traces = PlotlyJS.plot(bz, kpath).plot.data
     end
 
     n_bands = size(E, 1)
