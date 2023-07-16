@@ -1,9 +1,9 @@
-using Wannier: BVectors, BVectorShells, make_supercell
+using Wannier: KgridStencil, make_supercell
 using PlotlyJS
 using PeriodicTable: elements
 
 """
-    plot(bvectors::BVectors; n_k::Int=1)
+    plot(bvectors::KgridStencil; n_k::Int=1)
 
 Plot the b-vectors.
 
@@ -12,10 +12,10 @@ and the b-vectors as spheres whose radius is proportional to the weight.
 The b-vectors from the same shell have the same color.
 
 # Arguments
-- `bvectors`: the BVectors
+- `bvectors`: the KgridStencil
 - `n_k`: the number of repeated kpoints in each direction
 """
-function PlotlyJS.plot(bvectors::BVectors; n_k::Int=1)
+function PlotlyJS.plot(bvectors::KgridStencil; n_k::Int=1)
     traces = _plotly_lattice(bvectors.recip_lattice)
 
     # This generates too much points, hard to see

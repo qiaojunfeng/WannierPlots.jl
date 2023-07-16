@@ -22,7 +22,7 @@ See also the keyword arguments of [`_get_band_plot`](@ref).
 function plot_band_diff(
     kpi::KPathInterpolant, E1::AbstractArray, E2::AbstractArray; kwargs...
 )
-    x = Wannier.get_x(kpi)
+    x = Wannier.get_linear_path(kpi)
     symm_point_indices, symm_point_labels = Wannier.get_symm_point_indices_labels(kpi)
 
     P1 = _get_band_plot(

@@ -63,7 +63,7 @@ Return a PlotlyJS `Plot` struct for the band structure.
 - `shift_fermi`: shift the Fermi energy to 0
 - `symm_idx`: indices of high-symmetry kpoints
 - `symm_label`: labels of high-symmetry kpoints
-- `color`: color of the band
+- `color`: color of the band, can have a shape same as eigenvalues
 - `kwargs`: additional keyword arguments for PlotlyJS, the `line` attribute of `scatter`.
     For a full customization, directly manipulate the returned `Plot` struct.
     See [PlotlyJS documentation](http://juliaplots.org/PlotlyJS.jl/stable/syncplots/).
@@ -98,14 +98,34 @@ function _get_band_plot(
         ylabel = "E - E_F (eV)"
     end
 
+    if color isa AbstractVector
+        color_plot = reduce(hcat, color)
+        cmin, cmax = extrema(color_plot)
+        color_plot = Vector(eachrow(color_plot))
+        # mode = "lines+markers"
+        mode = "markers"
+        color_kwargs = (; cmin, cmax)
+    else
+        color_plot = [color for _ in 1:n_bands]
+        mode = "lines"
+        color_kwargs = (;)
+    end
     if n_bands > 1
         traces = PlotlyJS.AbstractTrace[]
-        for e in eachrow(E_plot)
-            push!(traces, PlotlyJS.scatter(; x=x, y=e, line=attr(; color=color, kwargs...)))
+        for (e, c) in zip(eachrow(E_plot), color_plot)
+            push!(
+                traces,
+                PlotlyJS.scatter(;
+                    x=x, y=e, mode=mode, marker=(; color=c, color_kwargs..., kwargs...)
+                ),
+            )
         end
     else
         traces = PlotlyJS.scatter(;
-            x=x, y=E_plot[1, :], line=attr(; color=color, kwargs...)
+            x=x,
+            y=E_plot[1, :],
+            mode,
+            marker=(; color=color_plot[1], color_kwargs..., kwargs...),
         )
     end
 
@@ -138,7 +158,7 @@ function _get_band_plot(
         # width = 480, height = 480,
         # #margin=attr(l=50, r=5, b=15, t=10),
         plot_bgcolor="rgba(0,0,0,0)",  # transparent background
-        paper_bgcolor="rgba(0,0,0,0)",  # transparent backgroun
+        paper_bgcolor="rgba(0,0,0,0)",  # transparent background
     )
 
     # for storing infinite lines
@@ -205,7 +225,7 @@ Plot band structure.
 See also the keyword arguments of [`_get_band_plot`](@ref).
 """
 function plot_band(kpi::KPathInterpolant, eigenvalues; kwargs...)
-    x = Wannier.get_x(kpi)
+    x = Wannier.get_linear_path(kpi)
     symm_point_indices, symm_point_labels = Wannier.get_symm_point_indices_labels(kpi)
     return plot_band(x, eigenvalues; symm_point_indices, symm_point_labels, kwargs...)
 end
