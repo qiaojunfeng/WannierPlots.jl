@@ -23,10 +23,10 @@ function plot_band_diff(
     kpi::KPathInterpolant, E1::AbstractArray, E2::AbstractArray; kwargs...
 )
     x = Wannier.get_x(kpi)
-    symm_idx, symm_label = Wannier.get_symm_idx_label(kpi)
+    symm_point_indices, symm_point_labels = Wannier.get_symm_point_indices_labels(kpi)
 
     P1 = _get_band_plot(
-        x, E1; color="grey", symm_idx=symm_idx, symm_label=symm_label, kwargs...
+        x, E1; color="grey", symm_point_indices, symm_point_labels, kwargs...
     )
     # orange and slightly thinner
     P2 = _get_band_plot(
@@ -35,8 +35,8 @@ function plot_band_diff(
         color="red",
         dash="dash",
         width=0.9,
-        symm_idx=symm_idx,
-        symm_label=symm_label,
+        symm_point_indices,
+        symm_point_labels,
         kwargs...,
     )
 

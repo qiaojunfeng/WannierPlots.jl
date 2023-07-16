@@ -7,9 +7,7 @@ import Makie as MK
 export plot_wf
 
 """
-    plot_wf(rgrid, W::Array{Float,3}, lattice::Matrix{Float},
-        atom_positions::Matrix{Float}, atom_numbers::Vector{Int};
-        iso::=nothing)
+    plot_wf(rgrid, W, lattice, atom_positions, atom_numbers; iso=nothing)
 
 Plot volumetric data with Makie, e.g., real space WF.
 
@@ -27,7 +25,7 @@ function plot_wf(
     rgrid::Wannier.RGrid,
     W::AbstractArray{T,3},
     lattice::AbstractMatrix{T},
-    atom_positions::AbstractMatrix{T},
+    atom_positions::AbstractVector,
     atom_numbers::AbstractVector{U};
     iso::Union{T,Nothing}=nothing,
 ) where {T<:Real,U<:Integer}

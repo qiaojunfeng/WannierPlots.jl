@@ -70,17 +70,20 @@ Return a PlotlyJS `Plot` struct for the band structure.
 """
 function _get_band_plot(
     x::AbstractVector{T},
-    E::AbstractArray{T};
+    eigenvalues::AbstractVector;
     fermi_energy::Union{Nothing,T}=nothing,
     shift_fermi::Bool=false,
-    symm_idx::Union{Nothing,AbstractArray{Int}}=nothing,
-    symm_label::Union{Nothing,AbstractVector{String}}=nothing,
+    symm_point_indices::Union{Nothing,AbstractArray{Int}}=nothing,
+    symm_point_labels::Union{Nothing,AbstractVector{String}}=nothing,
     color="black",
     kwargs...,
 ) where {T<:Number}
-    ndims(E) <= 2 || error("E must be a 1D or 2D array")
-    if symm_idx !== nothing
-        length(symm_idx) == length(symm_label) ||
+    n_kpts = length(eigenvalues)
+    @assert n_kpts > 0 "empty eigenvalues"
+    n_bands = length(eigenvalues[1])
+
+    if symm_point_indices !== nothing
+        length(symm_point_indices) == length(symm_point_labels) ||
             error("symm_idx and symm_label must have the same length")
     end
     if shift_fermi && fermi_energy === nothing
@@ -88,19 +91,22 @@ function _get_band_plot(
     end
 
     ylabel = "E (eV)"
-    E_plot = E
+    # convert to dense matrix for fast indexing, n_bands * n_kpts
+    E_plot = reduce(hcat, eigenvalues)
     if shift_fermi
-        E_plot = E - fermi_energy
+        E_plot .-= fermi_energy
         ylabel = "E - E_F (eV)"
     end
 
-    if ndims(E) == 2
+    if n_bands > 1
         traces = PlotlyJS.AbstractTrace[]
         for e in eachrow(E_plot)
             push!(traces, PlotlyJS.scatter(; x=x, y=e, line=attr(; color=color, kwargs...)))
         end
     else
-        traces = PlotlyJS.scatter(; x=x, y=E_plot, line=attr(; color=color, kwargs...))
+        traces = PlotlyJS.scatter(;
+            x=x, y=E_plot[1, :], line=attr(; color=color, kwargs...)
+        )
     end
 
     layout = Layout(;
@@ -117,7 +123,7 @@ function _get_band_plot(
             linecolor="black", # show axis boundary
         ),
         yaxis=attr(;
-            range=[minimum(E) - 0.5, maximum(E) + 0.5],
+            range=[minimum(E_plot) - 0.5, maximum(E_plot) + 0.5],
             title=ylabel,
             zeroline=false,
             showgrid=false,
@@ -138,8 +144,8 @@ function _get_band_plot(
     # for storing infinite lines
     shapes = []
 
-    if symm_idx !== nothing
-        idx, label = _merge_consecutive_labels(symm_idx, symm_label)
+    if symm_point_indices !== nothing
+        idx, label = _merge_consecutive_labels(symm_point_indices, symm_point_labels)
         # add vertial lines for high-symm points to the background
         for i in idx
             push!(shapes, vline(x[i]; mode="lines", line=attr(; color="black", width=0.2)))
@@ -152,14 +158,15 @@ function _get_band_plot(
     end
 
     if fermi_energy !== nothing
+        if shift_fermi
+            εF_plot = 0
+        else
+            εF_plot = fermi_energy
+        end
         # add horizontal line for Fermi to the background
         push!(
             shapes,
-            hline(
-                fermi_energy;
-                mode="lines",
-                line=attr(; dash="dash", color="blue", width=0.2),
-            ),
+            hline(εF_plot; mode="lines", line=attr(; dash="dash", color="blue", width=0.2)),
         )
     end
 
@@ -169,19 +176,19 @@ function _get_band_plot(
 end
 
 """
-    plot_band(x::AbstractVector, E::AbstractArray; kwargs...)
+    plot_band(x::AbstractVector, eigenvalues; kwargs...)
 
 Plot band structure.
 
 # Arguments
 - `x`: 1D array for x axis
-- `E`: band energies, 1D of length `n_kpts`, or 2D array of size `n_bands * n_kpts`
+- `eigenvalues`: band energies, 1D of length `n_kpts`, or 2D array of size `n_bands * n_kpts`
 
 # Keyword Arguments
 See also the keyword arguments of [`_get_band_plot`](@ref).
 """
-function plot_band(x::AbstractVector, E::AbstractArray; kwargs...)
-    P = _get_band_plot(x, E; kwargs...)
+function plot_band(x::AbstractVector, eigenvalues; kwargs...)
+    P = _get_band_plot(x, eigenvalues; kwargs...)
     return PlotlyJS.plot(P)
 end
 
@@ -197,8 +204,8 @@ Plot band structure.
 # Keyword Arguments
 See also the keyword arguments of [`_get_band_plot`](@ref).
 """
-function plot_band(kpi::KPathInterpolant, E::AbstractArray; kwargs...)
+function plot_band(kpi::KPathInterpolant, eigenvalues; kwargs...)
     x = Wannier.get_x(kpi)
-    symm_idx, symm_label = Wannier.get_symm_idx_label(kpi)
-    return plot_band(x, E; symm_idx=symm_idx, symm_label=symm_label, kwargs...)
+    symm_point_indices, symm_point_labels = Wannier.get_symm_point_indices_labels(kpi)
+    return plot_band(x, eigenvalues; symm_point_indices, symm_point_labels, kwargs...)
 end

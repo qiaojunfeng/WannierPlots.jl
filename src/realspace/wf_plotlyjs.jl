@@ -53,20 +53,20 @@ function _lattice(lattice::AbstractMatrix)
 end
 
 function _atoms(
-    lattice::AbstractMatrix, atom_positions::AbstractMatrix, atom_numbers::AbstractVector
+    lattice::AbstractMatrix, atom_positions::AbstractVector, atom_numbers::AbstractVector
 )
     xyz = []
     radius = []
     color = []
     label = []
-    for i in axes(atom_positions, 2)
+    for (pos, num) in zip(atom_positions, atom_numbers)
         # TODO these are from json file
-        # ele = elements[atom_numbers[i]]
+        # ele = elements[num]
         # s = ele["symbol"]
         # c = ele["cpkHexColor"]
         # r = ele["radius"] / elements[1]["radius"] / 10  # normalized by Hydrogen radius
         # these from PeriodicTable
-        ele = elements[atom_numbers[i]]
+        ele = elements[num]
         s = ele.symbol
         push!(label, s)
         c = ele.cpk_hex
@@ -74,8 +74,8 @@ function _atoms(
         # https://github.com/JuliaPhysics/PeriodicTable.jl/issues/34
         r = 0.5  # currently no radius in PeriodicTable
         push!(radius, r)
-        pos = lattice * atom_positions[:, i]
-        push!(xyz, pos)
+        pos_cart = lattice * pos
+        push!(xyz, pos_cart)
     end
     return xyz, radius, color, label
 end
