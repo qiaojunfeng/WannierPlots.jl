@@ -3,6 +3,9 @@ using PeriodicTable: elements
 using GeometryBasics: Point, TriangleFace
 using Meshing: MarchingCubes, MarchingTetrahedra, isosurface
 using StatsBase: fit, Histogram
+using Wannier: RGrid, origin, span_vectors
+
+export plot_wannierfunction
 
 # unfortunately, the PeriodicTable.jl does not provide atomic radius info,
 # we can use this json from this repo
@@ -11,162 +14,6 @@ using StatsBase: fit, Histogram
 # You need to first run
 #   wget https://raw.githubusercontent.com/AlexGustafsson/molecular-data/master/json/elements.json
 # elements = JSON.parsefile(joinpath(@__DIR__, "elements.json"))
-
-"""
-A plotly sphere.
-"""
-function _sphere(r₀, r; kwargs...)
-    N = 32
-    u = range(0, 2π, N)
-    v = range(0, π, N)
-    x = r₀[1] .+ r * cos.(u) * sin.(v)'
-    y = r₀[2] .+ r * sin.(u) * sin.(v)'
-    z = r₀[3] .+ r * repeat(cos.(v)'; outer=[N, 1])
-
-    return PlotlyJS.surface(; x=x, y=y, z=z, kwargs...)
-end
-
-function _lattice(lattice::AbstractMatrix)
-    # trace to loop through all the lattice parallelepipede
-    xyz =
-        [
-            0 0 0
-            1 0 0
-            1 1 0
-            0 1 0
-            0 0 0
-            0 0 1
-            1 0 1
-            1 0 0
-            1 1 0
-            1 1 1
-            1 0 1
-            1 1 1
-            0 1 1
-            0 1 0
-            0 1 1
-            0 0 1
-        ]'
-    return lattice * xyz
-end
-
-function _atoms(
-    lattice::AbstractMatrix, atom_positions::AbstractVector, atom_numbers::AbstractVector
-)
-    xyz = []
-    radius = []
-    color = []
-    label = []
-    for (pos, num) in zip(atom_positions, atom_numbers)
-        # TODO these are from json file
-        # ele = elements[num]
-        # s = ele["symbol"]
-        # c = ele["cpkHexColor"]
-        # r = ele["radius"] / elements[1]["radius"] / 10  # normalized by Hydrogen radius
-        # these from PeriodicTable
-        ele = elements[num]
-        s = ele.symbol
-        push!(label, s)
-        c = ele.cpk_hex
-        push!(color, c)
-        # https://github.com/JuliaPhysics/PeriodicTable.jl/issues/34
-        r = 0.5  # currently no radius in PeriodicTable
-        push!(radius, r)
-        pos_cart = lattice * pos
-        push!(xyz, pos_cart)
-    end
-    return xyz, radius, color, label
-end
-
-"""
-Plotly lattice
-
-lattice: each column is a lattice vector
-origin: the overall shift of the structure, in cartesian
-"""
-function _plotly_lattice(lattice::AbstractMatrix, origin::AbstractVector=[0, 0, 0])
-    # lattice
-    xyz = _lattice(lattice)
-    x = xyz[1, :] .+ origin[1]
-    y = xyz[2, :] .+ origin[2]
-    z = xyz[3, :] .+ origin[3]
-
-    d = Dict(
-        "mode" => "lines",
-        "x" => x,
-        "y" => y,
-        "z" => z,
-        "line" => Dict("width" => 6, "color" => "black"),
-    )
-    lat = PlotlyJS.scatter3d(d)
-
-    arrow = Dict(
-        "x" => lattice[1, :] .+ origin[1],
-        "y" => lattice[2, :] .+ origin[2],
-        "z" => lattice[3, :] .+ origin[3],
-        "u" => 1 .* lattice[1, :],
-        "v" => 1 .* lattice[2, :],
-        "w" => 1 .* lattice[3, :],
-        "anchor" => "tip", # make cone tip be at endpoint
-        "sizemode" => "absolute",
-        "sizeref" => 0.5,
-        "hoverinfo" => ["text"],
-        "text" => ["a1", "a2", "a3"],
-        "colorscale" => [[0, "#FDE74C"], [1, "#FDE74C"]], # color all cones yellow
-        "showscale" => false,
-    )
-    axs = PlotlyJS.cone(arrow)
-
-    return [lat, axs]
-end
-
-"""
-Plotly lattice and atoms
-
-lattice: each column is a lattice vector
-atom_positions: each column is an atomic position, in fractional coordinates
-atom_numbers: atomic number of each atom
-origin: the overall shift of the structure, in cartesian
-"""
-function _plotly_structure(
-    lattice::AbstractMatrix,
-    atom_positions::AbstractMatrix,
-    atom_numbers::AbstractVector;
-    origin::AbstractVector=[0, 0, 0],
-)
-    traces = _plotly_lattice(lattice, origin)
-
-    # atoms
-    # d = Dict(
-    #     "mode" => "markers",
-    #     "x" => pos[1, :],
-    #     "y" => pos[2, :],
-    #     "z" => pos[3, :],
-    #     "marker" => Dict(
-    #         "size" => 5,
-    #         "color" => "orange",
-    #         # colorscale => "Greens",
-    #         # cmin => -20,
-    #         # cmax => 50
-    #     )
-    # )
-    # atoms = scatter3d(d)
-    atoms = []
-    xyz, radius, color, label = _atoms(lattice, atom_positions, atom_numbers)
-    for i in axes(xyz, 1)
-        s = label[i]
-        c = color[i]
-        r = radius[i]
-        colorscale = [[0, c], [1, c]]
-        pos = xyz[i]
-        sph = _sphere(pos, r; colorscale=colorscale, text=s, showscale=false)
-        push!(atoms, sph)
-    end
-
-    append!(traces, atoms)
-
-    return traces
-end
 
 """
 Guess iso from histogram.
@@ -275,23 +122,40 @@ Plot volumetric data with Plotly.
 E.g., realspace WFs.
 
 data: volumetric data in 3D
+
+# Examples
+
+1. Read xsf file
+```julia
+using Wannier, WannierPlots
+x = read_xsf("si2_00001.xsf");
+plot_wannierfunction(x.rgrid, x.W, x.primvec, inv(x.primvec) * x.atom_positions, parse.(Int, x.atoms))
+```
+
+2. Read cube file
+```julia
+using Wannier, WannierPlots
+cube = Wannier.read_cube("Si2_valence_00001.cube");
+win = Wannier.read_win("Si2_valence.win")
+plot_wannierfunction(cube.rgrid, cube.W, win.unit_cell_cart, eachcol(cube.atom_positions), cube.atom_numbers)
+```
 """
-function plot_wf_plotly(
-    rgrid::Wannier.RGrid,
+function plot_wannierfunction(
+    rgrid::RGrid,
     W::AbstractArray{T,3},
     lattice::AbstractMatrix{T},
-    atom_positions::AbstractMatrix{T},
+    atom_positions::AbstractVector,
     atom_numbers::AbstractVector{U};
     iso::Union{T,Nothing}=nothing,
 ) where {T<:Real,U<:Integer}
-    structure = _plotly_structure(lattice, atom_positions, atom_numbers)
+    crystal = get_crystal_plot(lattice, atom_positions, atom_numbers)
 
     if isnothing(iso)
         iso = _guess_isolevel(W)
     end
 
-    O = Wannier.origin(rgrid)
-    spanvec = Wannier.span_vectors(rgrid)
+    O = origin(rgrid)
+    spanvec = span_vectors(rgrid)
     a, b = minimum(W), maximum(W)
     if iso >= a
         s1 = _plotly_mesh3d(O, spanvec, W, iso, "#C3423F")
@@ -300,7 +164,9 @@ function plot_wf_plotly(
         s2 = _plotly_mesh3d(O, spanvec, W, -iso, "#5BC0EB")
     end
 
-    traces = [structure..., s1, s2]
+    traces = crystal.data
+    push!(traces, s1)
+    push!(traces, s2)
 
     # TODO Whatever I tried, plotlyjs refuses to set equal aspect ratio for the 3 axes :-(
     # layout = Layout(;
@@ -319,6 +185,3 @@ function plot_wf_plotly(
     # )
     return Plot(traces)#, layout)
 end
-
-# x = read_xsf("si2_00001.xsf");
-# WannierPlots.plot_wf_plotly(x.rgrid, x.W, x.primvec, inv(x.primvec) * x.atom_positions, parse.(Int, x.atoms))

@@ -36,7 +36,11 @@ function _atoms(
         # c = ele["cpkHexColor"]
         # r = ele["radius"] / elements[1]["radius"] / 10  # normalized by Hydrogen radius
         # these from PeriodicTable
-        ele = elements[Symbol(atom)]
+        if isa(atom, Integer)
+            ele = elements[atom]
+        else
+            ele = elements[Symbol(atom)]
+        end
         s = ele.symbol
         push!(label, s)
         c = ele.cpk_hex
