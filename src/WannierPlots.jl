@@ -1,17 +1,17 @@
 module WannierPlots
 
-using Reexport
-
-@reexport using PlotlyJS
+using DocStringExtensions
+using LinearAlgebra
+using Printf: @sprintf
+using PlotlyJS
 
 include("band/band.jl")
-include("band/diff.jl")
+include("dos.jl")
+include("bvectors.jl")
+include("crystal.jl")
+include("wannierfunction.jl")
+include("fermisurface.jl")
 
-include("realspace/wf_plotlyjs.jl")
-include("realspace/wf_makie.jl")
-
-include("fermisurf_plotlyjs.jl")
-
-# include("bvectors.jl")
+# include("wf_makie.jl")
 
 end

@@ -1,3 +1,5 @@
+module WannierPlotsMakieExt
+
 using LinearAlgebra
 using GeometryBasics
 import Makie as MK
@@ -120,4 +122,6 @@ function plot_wf(
 
     # return scene
     return fig
+end
+
 end

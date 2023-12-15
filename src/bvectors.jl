@@ -1,9 +1,10 @@
 using Wannier: KgridStencil, make_supercell
-using PlotlyJS
 using PeriodicTable: elements
 
+export plot_bvectors
+
 """
-    plot(bvectors::KgridStencil; n_k::Int=1)
+    $(SIGNATURES)
 
 Plot the b-vectors.
 
@@ -15,7 +16,7 @@ The b-vectors from the same shell have the same color.
 - `bvectors`: the KgridStencil
 - `n_k`: the number of repeated kpoints in each direction
 """
-function PlotlyJS.plot(bvectors::KgridStencil; n_k::Int=1)
+function plot_bvectors(bvectors::KgridStencil; n_k::Int=1)
     traces = _plotly_lattice(bvectors.recip_lattice)
 
     # This generates too much points, hard to see

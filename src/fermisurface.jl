@@ -1,7 +1,7 @@
-using StaticArrays: SVector
-using LinearAlgebra: inv
-using PlotlyJS
 using Brillouin: wignerseitz, KPath, reduce_to_wignerseitz
+using Wannier: RGrid, origin, span_vectors
+
+export plot_fermisurface
 
 const TRANSPARENT_LAYOUT = Layout(;
     showlegend=false,
@@ -42,15 +42,15 @@ const TRANSPARENT_LAYOUT = Layout(;
 """
 Plot Fermi surface with Plotly.
 """
-function plot_fermisurf_plotly(
-    rgrid::Wannier.RGrid,
+function plot_fermisurface(
+    rgrid::RGrid,
     fermi_energy::T,
     E::AbstractArray{T,4};
     kpath::Union{KPath,Nothing}=nothing,
 ) where {T<:Real}
-    O = Wannier.origin(rgrid)
+    O = origin(rgrid)
 
-    recip_lattice = Wannier.span_vectors(rgrid)
+    recip_lattice = span_vectors(rgrid)
     bz = wignerseitz([v for v in eachcol(recip_lattice)])
 
     if kpath === nothing

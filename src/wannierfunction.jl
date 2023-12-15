@@ -1,10 +1,8 @@
-using LinearAlgebra
 using PeriodicTable: elements
 # prepend . due to Requires.jl
 using GeometryBasics: Point, TriangleFace
 using Meshing: MarchingCubes, MarchingTetrahedra, isosurface
 using StatsBase: fit, Histogram
-using PlotlyJS
 
 # unfortunately, the PeriodicTable.jl does not provide atomic radius info,
 # we can use this json from this repo
