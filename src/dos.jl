@@ -74,8 +74,9 @@ function get_dos_plot(
             shapes,
             PlotlyJS.vline(
                 εF_plot;
+		name="Fermi energy",
                 mode="lines",
-                line=PlotlyJS.attr(; dash="dash", color="blue", width=0.2),
+                line=PlotlyJS.attr(; dash="dash", color="black", width=0.5),
             ),
         )
     end

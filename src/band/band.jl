@@ -41,6 +41,37 @@ end
 """
     $(SIGNATURES)
 
+Convert labels of high-symmetry kpoints to unicode string.
+
+e.g., `GAMMA` -> `Γ`, `DELTA_0` -> `Δ₀`
+"""
+function to_unicode(labels::AbstractVector{<:AbstractString})
+    label_maps = Dict(
+        "GAMMA" => "Γ",
+        "DELTA" => "Δ",
+        "0" => "₀",
+        "1" => "₁",
+        "2" => "₂",
+        "3" => "₃",
+        "4" => "₄",
+        "5" => "₅",
+        "6" => "₆",
+        "7" => "₇",
+        "8" => "₈",
+        "9" => "₉",
+    )
+    return map(labels) do l
+        if occursin("_", l)
+            base, sub = split(l, "_"; limit=2)
+            return get(label_maps, base, base) * get(label_maps, sub, sub)
+        end
+        return get(label_maps, l, l)
+    end
+end
+
+"""
+    $(SIGNATURES)
+
 Return a PlotlyJS `Plot` struct for the band structure.
 
 # Arguments
@@ -154,6 +185,7 @@ function get_band_plot(
     shapes = []
 
     if symm_point_indices !== nothing
+        symm_point_labels = to_unicode(symm_point_labels)
         idxs, labels = merge_consecutive_labels(symm_point_indices, symm_point_labels)
         # add vertial lines for high-symm points to the background
         for i in idxs
@@ -183,14 +215,10 @@ function get_band_plot(
     return Plot(traces, layout)
 end
 
-function get_band_plot(
-    kpi::KPathInterpolant, eigenvalues::AbstractVector; kwargs...
-)
+function get_band_plot(kpi::KPathInterpolant, eigenvalues::AbstractVector; kwargs...)
     x = get_linear_path(kpi)
     symm_point_indices, symm_point_labels = get_symm_point_indices_labels(kpi)
-    return get_band_plot(
-        x, eigenvalues; symm_point_indices, symm_point_labels, kwargs...
-    )
+    return get_band_plot(x, eigenvalues; symm_point_indices, symm_point_labels, kwargs...)
 end
 
 """
@@ -218,9 +246,7 @@ function get_band_diff_plot(
 )
     P1 = get_band_plot(k, eigenvalues_1; color="grey", kwargs...)
     # red and slightly thinner
-    P2 = get_band_plot(
-        k, eigenvalues_2; color="red", dash="dash", width=0.9, kwargs...
-    )
+    P2 = get_band_plot(k, eigenvalues_2; color="red", dash="dash", width=0.9, kwargs...)
     addtraces!(P1, P2.data...)
     return P1
 end
