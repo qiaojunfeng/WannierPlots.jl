@@ -14,7 +14,6 @@ function _sphere(r₀, r; kwargs...)
     return PlotlyJS.surface(; x=x, y=y, z=z, kwargs...)
 end
 
-
 """
 Return a vector of PlotlyJS traces for atoms.
 

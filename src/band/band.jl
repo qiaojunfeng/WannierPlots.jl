@@ -1,5 +1,6 @@
 using PlotlyJS
 using Brillouin: KPathInterpolant
+using LaTeXStrings
 using Wannier: get_symm_point_indices_labels, get_linear_path
 
 export plot_band, plot_band_diff, get_band_plot, get_band_diff_plot
@@ -69,6 +70,10 @@ function to_unicode(labels::AbstractVector{<:AbstractString})
     end
 end
 
+function default_label_energy(shift_fermi::Bool)
+    return shift_fermi ? "E - E<sub>F</sub> (eV)" : "Energy (eV)"
+end
+
 """
     $(SIGNATURES)
 
@@ -100,6 +105,7 @@ function get_band_plot(
     symm_point_indices::Union{Nothing,AbstractVector}=nothing,
     symm_point_labels::Union{Nothing,AbstractVector}=nothing,
     color="black",
+    ylabel=default_label_energy(shift_fermi),
     kwargs...,
 )
     nkpts = length(eigenvalues)
@@ -114,13 +120,11 @@ function get_band_plot(
         error("shift_fermi is true, but fermi_energy is not given")
     end
 
-    ylabel = "E (eV)"
     # convert to dense matrix for fast indexing, size = nbands * nkpts
     # I use captial letters for matrices
     E = reduce(hcat, eigenvalues)
     if shift_fermi
         E .-= fermi_energy
-        ylabel = "E - E_F (eV)"
     end
 
     if color isa AbstractVector

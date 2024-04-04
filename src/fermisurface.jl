@@ -57,7 +57,8 @@ function plot_fermisurface(
         traces = PlotlyJS.plot(bz).plot.data
     else
         # some times there are only 7 digits in bxsf, so we use a loose tolerance
-        isapprox(bz.basis, kpath.basis; atol=1e-5) || error("kpath has a different reciprocal lattice")
+        isapprox(bz.basis, kpath.basis; atol=1e-5) ||
+            error("kpath has a different reciprocal lattice")
         traces = PlotlyJS.plot(bz, kpath).plot.data
     end
 
