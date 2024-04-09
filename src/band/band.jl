@@ -50,6 +50,8 @@ function to_unicode(labels::AbstractVector{<:AbstractString})
     label_maps = Dict(
         "GAMMA" => "Γ",
         "DELTA" => "Δ",
+        "LAMBDA" => "Λ",
+        "SIGMA" => "Σ",
         "0" => "₀",
         "1" => "₁",
         "2" => "₂",
