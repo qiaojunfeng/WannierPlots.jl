@@ -251,9 +251,37 @@ function get_band_diff_plot(
     k, eigenvalues_1::AbstractArray, eigenvalues_2::AbstractArray; kwargs...
 )
     P1 = get_band_plot(k, eigenvalues_1; color="grey", kwargs...)
+    # add legendgroup
+    for (i, t) in enumerate(P1.data)
+        t[:type] == "scatter" || continue
+        t[:legendgroup] = "DFT"
+        t[:showlegend] = (i == 1)
+        t[:name] = "DFT"
+        # t[:name] = "band " * string(i)
+    end
     # red and slightly thinner
     P2 = get_band_plot(k, eigenvalues_2; color="red", dash="dash", width=0.9, kwargs...)
+    # add legendgroup
+    for (i, t) in enumerate(P2.data)
+        t[:type] == "scatter" || continue
+        t[:legendgroup] = "Wan"
+        t[:showlegend] = (i == 1)
+        t[:name] = "Wan"
+        # t[:name] = "band " * string(i)
+    end
     addtraces!(P1, P2.data...)
+
+    # add legend
+    P1.layout[:showlegend] = true
+    P1.layout[:legend] = (;
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99,
+        bordercolor=:lightgrey,
+        borderwidth=0.8,
+        bgcolor="rgba(255,255,255,0.7)",
+    )
     return P1
 end
 
