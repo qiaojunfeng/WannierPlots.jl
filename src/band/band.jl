@@ -218,7 +218,7 @@ function get_band_plot(
     end
 
     relayout!(layout; shapes)
-    return Plot(traces, layout)
+    return PlotlyJS.Plot(traces, layout)
 end
 
 function get_band_plot(kpi::KPathInterpolant, eigenvalues::AbstractVector; kwargs...)
@@ -306,5 +306,5 @@ function plot_band_diff(
     k, eigenvalues_1::AbstractArray, eigenvalues_2::AbstractArray; kwargs...
 )
     P = get_band_diff_plot(k, eigenvalues_1, eigenvalues_2; kwargs...)
-    return plot(P)
+    return PlotlyJS.plot(P)
 end
