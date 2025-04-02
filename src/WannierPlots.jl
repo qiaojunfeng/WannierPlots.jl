@@ -11,7 +11,7 @@ include("bvectors.jl")
 include("crystal.jl")
 include("wannierfunction.jl")
 include("fermisurface.jl")
-include("convergence.jl")
+# include("convergence.jl")
 
 # include("wf_makie.jl")
 
