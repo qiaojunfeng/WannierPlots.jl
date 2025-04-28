@@ -5,6 +5,7 @@ using GeometryBasics
 import Makie as MK
 # if you need a standalone window, call `using GLMakie` before `using WannierPlots`,
 # if you need a browser tab, call `using WGLMakie` before `using WannierPlots`.
+using Wannier
 
 export plot_wf
 
