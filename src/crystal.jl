@@ -103,8 +103,11 @@ Return a vector of PlotlyJS traces for lattice vectors.
 
 - `lattice`: each column is a lattice vector
 - `origin`: the overall shift of the structure, in cartesian
+
+# Keyword Arguments
+- `label_prefix`: the prefix of the label, e.g. "a" for a1, a2, a3
 """
-function _lattice(lattice::AbstractMatrix, origin::AbstractVector=[0, 0, 0])
+function _lattice(lattice::AbstractMatrix, origin::AbstractVector=[0, 0, 0]; label_prefix::AbstractString="a")
     # lattice
     xyz = _lattice_lines(lattice)
     x = xyz[1, :] .+ origin[1]
@@ -122,7 +125,7 @@ function _lattice(lattice::AbstractMatrix, origin::AbstractVector=[0, 0, 0])
     lat = PlotlyJS.scatter3d(d)
 
     hovers = map(enumerate(eachcol(lattice))) do (i, l)
-        @sprintf "a%d<br>(%.4f, %.4f, %.4f)</br>norm: %.4f" i l... norm(l)
+        @sprintf "%s%d<br>(%.4f, %.4f, %.4f)</br>norm: %.4f" label_prefix i l... norm(l)
     end
     arrow = Dict(
         "x" => lattice[1, :] .+ origin[1],
