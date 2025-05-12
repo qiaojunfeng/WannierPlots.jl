@@ -1,5 +1,5 @@
 using LinearAlgebra
-using CairoMakie
+using Makie
 
 """
 Plot ||∇ₖ u|| for the bottom layer (kz = 1)

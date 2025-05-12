@@ -1,4 +1,4 @@
-using CairoMakie
+using Makie
 
 """
 Display a matrix
@@ -40,4 +40,3 @@ function symlog(a)
         x/a
     end
 end
-
