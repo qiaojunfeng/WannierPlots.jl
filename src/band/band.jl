@@ -213,7 +213,7 @@ function get_band_plot(
         # add horizontal line for Fermi to the background
         push!(
             shapes,
-            hline(εF_plot; mode="lines", line=attr(; dash="dash", color="blue", width=0.2)),
+            hline(εF_plot; mode="lines", line=attr(; dash="dash", color="deepskyblue")),
         )
     end
 
