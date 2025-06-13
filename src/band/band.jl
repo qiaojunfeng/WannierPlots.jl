@@ -144,12 +144,13 @@ function get_band_plot(
     end
 
     traces = PlotlyJS.AbstractTrace[]
-    for (e, c) in zip(eachrow(E), color_plot)
+    for (ib, e, c) in zip(1:nbands, eachrow(E), color_plot)
+        text = ["ik=$(ik) iband=$(ib)" for ik in 1:nkpts]
         if uniform_color
-            t = PlotlyJS.scatter(; x, y=e, mode, line=(; color=c, kwargs...))
+            t = PlotlyJS.scatter(; x, y=e, mode, line=(; color=c, kwargs...), text)
         else
             t = PlotlyJS.scatter(;
-                x, y=e, mode, marker=(; color=c, color_kwargs..., kwargs...)
+                x, y=e, mode, marker=(; color=c, color_kwargs..., kwargs...), text
             )
         end
         push!(traces, t)
